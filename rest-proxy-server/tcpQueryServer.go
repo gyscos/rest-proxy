@@ -19,15 +19,16 @@ func NewTcpClientConnection(conn net.Conn) *TcpClientConnection {
 	return &TcpClientConnection{conn, enc, dec}
 }
 
+// Called by the WebServer when it needs a page served.
 func (tcc *TcpClientConnection) Serve(url string) ([]byte, error) {
-	log.Println("Serving tcp connection", url)
+	// Send the GET request
 	err := tcc.enc.Encode(url)
 	if err != nil {
 		return nil, err
 	}
 
+	// Read the answer
 	var input []byte
-	log.Println("Scanning response...")
 	err = tcc.dec.Decode(&input)
 	if err != nil {
 		return nil, err
@@ -36,24 +37,28 @@ func (tcc *TcpClientConnection) Serve(url string) ([]byte, error) {
 	return input, nil
 }
 
+// Main backend server. Listens for incoming connections, and pipe requests
+// through its channels to the WebServer.
 type TcpQueryServer struct {
+	// Request Channel. Used to add a new target.
 	rc chan<- Request
-	cc chan<- string
 }
 
+// Some new guy just connected. We'll take care of him.
 func (tqs *TcpQueryServer) handleConnection(c net.Conn) {
 	tcc := NewTcpClientConnection(c)
-	a := make(chan string)
-	tqs.rc <- Request{conn: tcc, answer: a}
-	id := <-a
-	// Return that to the connection
-	tcc.enc.Encode(id)
-	// Then
+
+	// Ask a token to the server
+	tqs.rc <- Request{conn: tcc, confirmation: func(token string) error {
+		// Return that to the connection
+		return tcc.enc.Encode(token)
+	}}
 }
 
-func (tqs *TcpQueryServer) Run(port int, rc chan<- Request, cc chan<- string) error {
+// Main backend loop. Listens for incoming connection and serve them in
+// goroutines.
+func (tqs *TcpQueryServer) Run(port int, rc chan<- Request) error {
 	tqs.rc = rc
-	tqs.cc = cc
 
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
 	if err != nil {
@@ -66,7 +71,7 @@ func (tqs *TcpQueryServer) Run(port int, rc chan<- Request, cc chan<- string) er
 		if err != nil {
 			return err
 		}
-		go tqs.handleConnection(conn)
+		tqs.handleConnection(conn)
 
 	}
 	return nil

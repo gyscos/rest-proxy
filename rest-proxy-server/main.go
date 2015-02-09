@@ -17,15 +17,14 @@ func main() {
 
 	// Prepare communication
 	requestChannels := make(chan Request, 5)
-	cancelChannels := make(chan string, 5)
 
 	// Prepare servers
 	qs := TcpQueryServer{}
-	ws := NewWebServer(requestChannels, cancelChannels)
+	ws := NewWebServer(requestChannels)
 
 	// Run everything
 	go webServer(webPort, ws)
-	qs.Run(port, requestChannels, cancelChannels)
+	qs.Run(port, requestChannels)
 
 	// Wait?
 }

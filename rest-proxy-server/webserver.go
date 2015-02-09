@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 // A Target represents a client
@@ -20,9 +23,11 @@ func NewTarget(conn ClientConnection) *Target {
 // Redirrects http calls to the correct target
 type WebServer struct {
 	rc <-chan Request
-	cc <-chan string
+	cc chan string
 
 	targets map[string]*Target
+
+	mutex sync.RWMutex
 }
 
 // Main control loop. Listens for requests and update the rules.
@@ -42,39 +47,53 @@ func (ws *WebServer) ListenForRequests() {
 // Add the given client to the target pool
 func (ws *WebServer) handleRequest(rq Request) {
 	var id string
+	// Try to find a correct id
 	for {
 		id = randomId(4)
 		if _, ok := ws.targets[id]; !ok {
 			break
 		}
 	}
-	rq.answer <- id
-	ws.AddTarget(id, NewTarget(rq.conn))
+	err := rq.confirmation(id)
+	if err != nil {
+		// Error occured?
+		log.Println("Error on request confirmation:", err)
+	} else {
+		ws.AddTarget(id, NewTarget(rq.conn))
+	}
 }
 
 // Remove the given target
 func (ws *WebServer) handleCancel(id string) {
-	// TODO: mutex
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
 	// fmt.Println("Removing", id)
+	log.Println("Removing target", id)
 	delete(ws.targets, id)
 }
 
 func (ws *WebServer) AddTarget(id string, target *Target) {
-	// TODO: mutex
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+
 	// fmt.Println("Adding", id)
+	log.Println("New target:", id)
 	ws.targets[id] = target
 }
 
 func (ws *WebServer) GetTarget(id string) *Target {
-	// TODO: mutex
+	ws.mutex.RLock()
+	defer ws.mutex.RUnlock()
+
 	return ws.targets[id]
 }
 
 // Create a new web handler, and start goroutines to listen on the channels
-func NewWebServer(rc <-chan Request, cc <-chan string) *WebServer {
+func NewWebServer(rc <-chan Request) *WebServer {
 	ws := &WebServer{
 		rc:      rc,
-		cc:      cc,
+		cc:      make(chan string, 5),
 		targets: make(map[string]*Target),
 	}
 
@@ -103,6 +122,10 @@ func (ws *WebServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		b, err := target.conn.Serve(targetUrl)
 		if err != nil {
+			if err == io.EOF {
+				// Connection lost. Let's get rid of the guy
+				ws.cc <- id
+			}
 			// Error occured
 			handleNotFound(w)
 		} else {
