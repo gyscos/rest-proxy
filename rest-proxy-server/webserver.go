@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"math/rand"
 	"net/http"
 	"strings"
 )
 
+// A Target represents a client
 type Target struct {
 	// It has a connection
 	conn ClientConnection
@@ -17,6 +16,8 @@ func NewTarget(conn ClientConnection) *Target {
 	return &Target{conn: conn}
 }
 
+// Frontend for the rest-proxy server.
+// Redirrects http calls to the correct target
 type WebServer struct {
 	rc <-chan Request
 	cc <-chan string
@@ -24,6 +25,7 @@ type WebServer struct {
 	targets map[string]*Target
 }
 
+// Main control loop. Listens for requests and update the rules.
 func (ws *WebServer) ListenForRequests() {
 	for {
 		select {
@@ -37,6 +39,7 @@ func (ws *WebServer) ListenForRequests() {
 	}
 }
 
+// Add the given client to the target pool
 func (ws *WebServer) handleRequest(rq Request) {
 	var id string
 	for {
@@ -49,6 +52,7 @@ func (ws *WebServer) handleRequest(rq Request) {
 	ws.AddTarget(id, NewTarget(rq.conn))
 }
 
+// Remove the given target
 func (ws *WebServer) handleCancel(id string) {
 	// TODO: mutex
 	// fmt.Println("Removing", id)
@@ -69,10 +73,10 @@ func (ws *WebServer) GetTarget(id string) *Target {
 // Create a new web handler, and start goroutines to listen on the channels
 func NewWebServer(rc <-chan Request, cc <-chan string) *WebServer {
 	ws := &WebServer{
+		rc:      rc,
+		cc:      cc,
 		targets: make(map[string]*Target),
-
-		rc: rc,
-		cc: cc}
+	}
 
 	go ws.ListenForRequests()
 
@@ -83,8 +87,8 @@ func handleNotFound(w http.ResponseWriter) {
 	fmt.Fprintln(w, "Not found.")
 }
 
+// Main frontent event handler.
 func (ws *WebServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("Serving http")
 	// Find asked ID
 	url := r.URL.Path[1:]
 	id := strings.Split(url, "/")[0]
@@ -105,16 +109,4 @@ func (ws *WebServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Write(b)
 		}
 	}
-}
-
-var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-func randomId(l int) string {
-	result := make([]rune, l)
-
-	for i := 0; i < l; i++ {
-		result[i] = rune(letters[rand.Intn(len(letters))])
-	}
-
-	return string(result)
 }
