@@ -19,6 +19,10 @@ is not publicly visible. Using the client will generate a random identifier,
 and calls to http://publicserver.com/RandomID/Anything will be redirected
 to your local REST server.
 
+This is similar to `ssh -R`, but is simpler to use in some way:
+* It only requires ssh access to start the server
+* It can dispatch calls to multiple clients from the same server port
+
 ## Tutorial
 
 ### Client
