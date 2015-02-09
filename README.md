@@ -65,7 +65,7 @@ Usage: rest-proxy-client [-h webhost[:PORT]] target[:TARGET_PORT]
 target[:TARGET_PORT]    Hostname and optionnal port to connect to.
                           Default port is 6666
 Options:
-  -h hostname[:PORT]    Hostname and optionnal port to redirect calls to.
+  -h webhost[:PORT]     Hostname and optionnal port to redirect calls to.
                           Default is localhost:80
 ```
 
