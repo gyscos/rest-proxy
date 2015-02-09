@@ -30,11 +30,6 @@ func main() {
 	// Wait?
 }
 
-func serviceServe(port int) {
-	// Set a handler?
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
-}
-
 func webServer(port int, ws *WebServer) {
 	log.Println("Starting web server on port", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), ws))
