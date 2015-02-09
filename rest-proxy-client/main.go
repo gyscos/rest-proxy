@@ -21,7 +21,7 @@ func main() {
 	target = flag.Arg(0)
 
 	// And actually link to the target
-	client := NewClient(host)
+	client := newClient(host)
 	err := client.Connect(target)
 	if err != nil {
 		log.Fatal(err)

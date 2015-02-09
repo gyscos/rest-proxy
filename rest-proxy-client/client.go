@@ -8,16 +8,16 @@ import (
 	"net/http"
 )
 
-type Client struct {
+type client struct {
 	host string
 }
 
-func NewClient(host string) *Client {
+func newClient(host string) *client {
 	host = ensureHasPort(host, 80)
-	return &Client{host}
+	return &client{host}
 }
 
-func (c *Client) Connect(target string) error {
+func (c *client) Connect(target string) error {
 	target = ensureHasPort(target, 6666)
 
 	conn, err := net.Dial("tcp", target)
@@ -39,10 +39,10 @@ func (c *Client) Connect(target string) error {
 	fmt.Println(id)
 
 	// Now, answer calls on the socket with the host server
-	return c.serveHttp(dec, enc)
+	return c.serveHTTP(dec, enc)
 }
 
-func (c *Client) serveHttp(dec *gob.Decoder, enc *gob.Encoder) error {
+func (c *client) serveHTTP(dec *gob.Decoder, enc *gob.Encoder) error {
 	for {
 		var url string
 		err := dec.Decode(&url)

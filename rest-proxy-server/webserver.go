@@ -49,7 +49,7 @@ func (ws *WebServer) handleRequest(rq Request) {
 	var id string
 	// Try to find a correct id
 	for {
-		id = randomId(4)
+		id = randomID(4)
 		if _, ok := ws.targets[id]; !ok {
 			break
 		}
@@ -118,9 +118,9 @@ func (ws *WebServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// Ok, we're ready!
 		// Find the requested URL
-		targetUrl := url[len(id):]
+		targetURL := url[len(id):]
 
-		b, err := target.conn.Serve(targetUrl)
+		b, err := target.conn.Serve(targetURL)
 		if err != nil {
 			if err == io.EOF {
 				// Connection lost. Let's get rid of the guy

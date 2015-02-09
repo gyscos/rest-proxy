@@ -7,7 +7,7 @@ type QueryServer interface {
 	Run(port int, rc chan<- Request) error
 }
 
-// RequestHandler handles a single connection with a client.
+// ClientConnection handles a single connection with a client.
 type ClientConnection interface {
 	Serve(url string) ([]byte, error)
 }
