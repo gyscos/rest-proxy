@@ -1,6 +1,6 @@
 # Rest-proxy
 
-Rest-proxy is a simple system to enable dynamic REST proxying.
+Rest-proxy is a simple system to enable dynamic REST reverse proxying.
 
 It sets up a public server to which clients will connect to request temporary
 redirections.
