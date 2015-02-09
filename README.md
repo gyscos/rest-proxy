@@ -24,9 +24,11 @@ to your local REST server.
 ### Client
 
 To use the client, first get the code:
+
     go get github.com/Gyscos/rest-proxy/rest-proxy-client
 
 Then move to the golang bin directory (or add it to your PATH) and run:
+
     ./rest-proxy-client -h localhost:80 mypublicserver.com:6666
 
 This will connect to the rest-proxy server (hopefully) running on
@@ -39,9 +41,11 @@ your local server to handle.
 ### Server
 
 To use the server, as usual get the code:
+
     go get github.com/Gyscos/rest-proxy/rest-proxy-server
 
 And to start the server:
+
     ./rest-proxy-server -p 6666 -w 80
 
 Will run the web server on port 80 and listen for requests on port 6666
